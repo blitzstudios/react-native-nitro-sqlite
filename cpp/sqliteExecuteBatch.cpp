@@ -1,0 +1,73 @@
+/**
+ * SQL Batch execution implementation using default sqliteBridge implementation
+ */
+#include "sqliteExecuteBatch.hpp"
+#include "NitroSQLiteException.hpp"
+#include "operations.hpp"
+#include <utility>
+
+namespace margelo::rnnitrosqlite {
+
+std::vector<BatchQuery> batchParamsToCommands(std::vector<BatchQueryCommand>&& batchParams) {
+  auto commands = std::vector<BatchQuery>();
+  commands.reserve(batchParams.size());
+
+  for (auto& command : batchParams) {
+    if (command.params) {
+      using ParamsVec = SQLiteQueryParams;
+      using NestedParamsVec = std::vector<ParamsVec>;
+
+      if (std::holds_alternative<NestedParamsVec>(*command.params)) {
+        // This arguments is an array of arrays, like a batch update of a single sql command.
+        for (auto& params : std::get<NestedParamsVec>(*command.params)) {
+          commands.push_back(BatchQuery{command.query, std::move(params)});
+        }
+      } else {
+        commands.push_back(BatchQuery{std::move(command.query), std::move(std::get<ParamsVec>(*command.params))});
+      }
+    } else {
+      commands.push_back(BatchQuery{std::move(command.query), std::nullopt});
+    }
+  }
+
+  return commands;
+}
+
+SQLiteOperationResult sqliteExecuteBatch(const std::string& dbName, const std::vector<BatchQuery>& commands) {
+  size_t commandCount = commands.size();
+  if (commandCount <= 0) {
+    throw NitroSQLiteException(NitroSQLiteExceptionType::NoBatchCommandsProvided, "No SQL batch commands provided");
+  }
+
+  // BEGIN runs outside the try: if it fails, no transaction of ours is open, so there is nothing to roll back.
+  // A ROLLBACK here would either mask the BEGIN error or end another operation's transaction on this shared handle.
+  sqliteExecuteLiteral(dbName, "BEGIN EXCLUSIVE TRANSACTION");
+  try {
+    int rowsAffected = 0;
+    for (int i = 0; i < commandCount; i++) {
+      const auto& command = commands.at(i);
+
+      // We do not provide a data structure to receive query data because we don't need/want to handle this results in a batch execution
+      auto result = sqliteExecute(dbName, command.sql, command.params);
+      rowsAffected += result->getRowsAffected();
+    }
+    sqliteExecuteLiteral(dbName, "COMMIT");
+    return {
+        .rowsAffected = rowsAffected,
+        .commands = (int)commandCount,
+    };
+  } catch (...) {
+    // Roll back exactly once, and only if SQLite has not already rolled back on its own (e.g. SQLITE_FULL/IOERR/NOMEM).
+    // A failed ROLLBACK must never mask the original error.
+    if (sqliteIsInTransaction(dbName)) {
+      try {
+        sqliteExecuteLiteral(dbName, "ROLLBACK");
+      } catch (...) {
+        // ignore: rethrow the original error below
+      }
+    }
+    throw;
+  }
+}
+
+} // namespace margelo::rnnitrosqlite

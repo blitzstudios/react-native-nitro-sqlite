@@ -1,0 +1,1 @@
+{"version":3,"names":["_reactNativeNitroModules","require","HybridNitroSQLite","exports","NitroModules","createHybridObject"],"sourceRoot":"../../src","sources":["nitro.ts"],"mappings":";;;;;;AAAA,IAAAA,wBAAA,GAAAC,OAAA;AAGO,MAAMC,iBAAiB,GAAAC,OAAA,CAAAD,iBAAA,GAC5BE,qCAAY,CAACC,kBAAkB,CAAkB,aAAa,CAAC","ignoreList":[]}
