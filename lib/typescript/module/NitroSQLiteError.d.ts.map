@@ -1,0 +1,1 @@
+{"version":3,"file":"NitroSQLiteError.d.ts","sourceRoot":"","sources":["../../../src/NitroSQLiteError.ts"],"names":[],"mappings":"AAEA;;;GAGG;AACH,MAAM,CAAC,OAAO,OAAO,gBAAiB,SAAQ,KAAK;gBACrC,OAAO,EAAE,MAAM,EAAE,OAAO,CAAC,EAAE,YAAY;IAQnD;;;OAGG;IACH,MAAM,CAAC,SAAS,CAAC,KAAK,EAAE,OAAO,GAAG,gBAAgB;CAyBnD"}
