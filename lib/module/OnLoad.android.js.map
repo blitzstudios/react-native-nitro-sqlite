@@ -1,0 +1,1 @@
+{"version":3,"names":["NitroModules","NitroSQLiteOnLoad","createHybridObject","init"],"sourceRoot":"../../src","sources":["OnLoad.android.ts"],"mappings":";;AAAA,SAASA,YAAY,QAAQ,4BAA4B;AAGzD,MAAMC,iBAAiB,GACrBD,YAAY,CAACE,kBAAkB,CAAwB,mBAAmB,CAAC;AAC7E,OAAO,MAAMC,IAAI,GAAGA,CAAA,KAAMF,iBAAiB,CAACE,IAAI,CAAC,CAAC","ignoreList":[]}
