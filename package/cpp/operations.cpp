@@ -2,6 +2,7 @@
 #include "NitroSQLiteException.hpp"
 #include "hybridObjects/HybridNitroSQLiteQueryResult.hpp"
 #include "logs.hpp"
+#include "shred.hpp"
 #include "utils.hpp"
 #include <NitroModules/ArrayBuffer.hpp>
 #include <cmath>
@@ -129,6 +130,22 @@ std::shared_ptr<HybridNitroSQLiteQueryResult> sqliteExecute(const std::string& d
   }
 
   auto db = dbMap[dbName];
+
+  // Native (simdjson) shred sentinel: `execute`/`executeAsync` both route here, so intercepting before the
+  // prepare below covers the sync and off-thread paths. Params are `[specJson, rawJson, ...scopeBinds]`; the
+  // whole atomic delete+insert runs in `sqliteShredJsonArray` against this live handle. Returns a result
+  // carrying only `rowsAffected` (rows inserted) — no row set.
+  if (query.rfind("-- nitro_shred_v1", 0) == 0) {
+    if (!params || params->size() < 2 || !std::holds_alternative<std::string>(params->at(0)) || !std::holds_alternative<std::string>(params->at(1))) {
+      throw NitroSQLiteException::SqlExecution("nitro_shred: expected [specJson, rawJson, ...scopeBinds]");
+    }
+    const std::string& specJson = std::get<std::string>(params->at(0));
+    const std::string& rawJson = std::get<std::string>(params->at(1));
+    SQLiteQueryParams scopeBinds(params->begin() + 2, params->end());
+    int inserted = sqliteShredJsonArray(db, specJson, rawJson, scopeBinds);
+    SQLiteQueryResults emptyRows;
+    return std::make_shared<HybridNitroSQLiteQueryResult>(emptyRows, 0.0, inserted, std::nullopt);
+  }
 
   sqlite3_stmt* statement;
   int statementStatus = sqlite3_prepare_v2(db, query.c_str(), -1, &statement, NULL);

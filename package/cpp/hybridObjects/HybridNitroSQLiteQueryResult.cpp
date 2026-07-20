@@ -18,8 +18,12 @@ namespace {
    */
   size_t getRowExternalMemorySize(const SQLiteQueryResultRow& row) {
     size_t bucketMemory = row.bucket_count() * sizeof(void*);
+    // Per-node control-block overhead (next pointer + cached hash + allocator rounding) ADDED on top of the
+    // key/value pair. The upstream `* nodePadding` multiplied the pair size ~24x, over-reporting every
+    // QueryResult's external size by the same factor — enough transient reads (e.g. an available-list load)
+    // to falsely trip Hermes' external-memory guard mid-query. Additive padding reflects real node cost.
     constexpr size_t nodePadding = 24;
-    size_t nodesMemory = row.size() * (sizeof(std::pair<std::string, SQLiteValue>) * nodePadding);
+    size_t nodesMemory = row.size() * (sizeof(std::pair<std::string, SQLiteValue>) + nodePadding);
     return bucketMemory + nodesMemory;
   }
 
