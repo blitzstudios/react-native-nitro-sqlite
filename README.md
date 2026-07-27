@@ -68,6 +68,30 @@ const db = open({ name: 'myDb.sqlite' })
 
 ---
 
+# Concurrent reads: a second connection
+
+Every connection is opened in SQLite's serialized mode, so all of one connection's callers queue behind a single
+mutex — a sync `execute` on the JS thread waits out an in-flight `executeBatchAsync` on a worker thread. If you have
+a read path that must not stall behind writes, give it its own connection with `openSecondary()`:
+
+```typescript
+import { open, openSecondary } from 'react-native-nitro-sqlite'
+
+const db = open({ name: 'myDb.sqlite' })
+db.execute('PRAGMA journal_mode=WAL') // WAL is what lets a reader and the writer run at once
+
+const reader = openSecondary({ name: 'myDb.sqlite', handle: 'myDb.sqlite:reader' })
+const rows = reader.execute('SELECT * FROM users') // unaffected by a concurrent write on `db`
+```
+
+`handle` is the connection's identity — it must be unused, and it's what `close()` and every query address. The
+database must already exist (a secondary connection never creates one, so a wrong `name` throws rather than
+attaching to an empty file), and `delete()` is refused on it: the connection that named the file owns that. Pass
+`readOnly: true` to have SQLite reject writes through the connection outright; `TEMP` tables stay writable either
+way, since SQLite keeps them in a separate temp database.
+
+---
+
 # Sync vs async
 
 - **Sync** (`execute`, `executeBatch`, `loadFile`): Run on the JS thread. Use for small, fast work; heavy work can block the UI.
@@ -256,6 +280,7 @@ To put the database in an app group (e.g. for extensions), set `RNNitroSQLite_Ap
 ```typescript
 import {
   open,
+  openSecondary,
   NitroSQLiteError,
   typeORMDriver,
 } from 'react-native-nitro-sqlite'

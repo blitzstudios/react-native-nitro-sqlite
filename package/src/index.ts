@@ -1,6 +1,6 @@
 import { transaction } from './operations/transaction'
 import { HybridNitroSQLite } from './nitro'
-import { open } from './operations/session'
+import { open, openSecondary } from './operations/session'
 import { execute, executeAsync } from './operations/execute'
 import { init } from './OnLoad'
 import { executeBatch, executeBatchAsync } from './operations/executeBatch'
@@ -13,6 +13,7 @@ export const NitroSQLite = {
   // Overwrite native `open` function with session-based JS abstraction,
   // where the database name can be ommited once opened
   open,
+  openSecondary,
   // More JS abstractions, that perform type casting and validation.
   transaction,
   execute,
@@ -21,7 +22,7 @@ export const NitroSQLite = {
   executeBatchAsync,
 }
 
-export { open } from './operations/session'
+export { open, openSecondary } from './operations/session'
 export { default as NitroSQLiteError } from './NitroSQLiteError'
 export type * from './types'
 export { typeORMDriver } from './typeORM'

@@ -18,6 +18,8 @@ public:
 public:
   // Methods
   void open(const std::string& dbName, const std::optional<std::string>& location) override;
+  void openSecondary(const std::string& dbName, const std::string& handle, std::optional<bool> readOnly,
+                     const std::optional<std::string>& location) override;
 
   void close(const std::string& dbName) override;
 

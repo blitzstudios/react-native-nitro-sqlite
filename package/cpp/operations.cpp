@@ -38,6 +38,40 @@ void sqliteOpenDb(const std::string& dbName, const std::string& docPath) {
   }
 }
 
+/**
+ * Open a second (or third, …) connection to an existing database file, registered under `handle`.
+ *
+ * `handle` — not the file name — is this connection's identity in `dbMap`, which is what makes the extra
+ * connection genuinely independent of the primary one: two entries, two `sqlite3*`, no shared `FULLMUTEX`. Under
+ * WAL that lets a reader see a committed snapshot while the writer appends, which is the point.
+ *
+ * Deliberately omits `SQLITE_OPEN_CREATE`: a secondary connection attaches to a database someone else already
+ * opened. Without this, a typo'd `dbName` would silently create an empty file and every read through the handle
+ * would return no rows — a failure that looks like missing data rather than a mistake.
+ */
+void sqliteOpenSecondaryDb(const std::string& dbName, const std::string& handle, bool readOnly, const std::string& docPath) {
+  if (dbMap.count(handle) == 1) {
+    throw NitroSQLiteException(NitroSQLiteExceptionType::DatabaseCannotBeOpened,
+                               "handle '" + handle + "' is already in use by an open connection");
+  }
+
+  std::string dbPath = get_db_path(dbName, docPath);
+
+  int sqlOpenFlags = (readOnly ? SQLITE_OPEN_READONLY : SQLITE_OPEN_READWRITE) | SQLITE_OPEN_FULLMUTEX;
+
+  sqlite3* db;
+  int exit = sqlite3_open_v2(dbPath.c_str(), &db, sqlOpenFlags, nullptr);
+
+  if (exit != SQLITE_OK) {
+    // `db` is non-null even on failure (so `errmsg` is readable); close it so the failed attempt doesn't leak.
+    std::string message = std::string(sqlite3_errmsg(db)) + " (secondary connection to " + dbPath + ")";
+    sqlite3_close_v2(db);
+    throw NitroSQLiteException(NitroSQLiteExceptionType::DatabaseCannotBeOpened, message);
+  }
+
+  dbMap[handle] = db;
+}
+
 void sqliteCloseDb(const std::string& dbName) {
 
   if (dbMap.count(dbName) == 0) {

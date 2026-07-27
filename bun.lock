@@ -45,7 +45,7 @@
     },
     "example": {
       "name": "react-native-nitro-sqlite-example",
-      "version": "9.1.11",
+      "version": "9.6.0",
       "dependencies": {
         "@craftzdog/react-native-buffer": "^6.0.5",
         "@react-navigation/native": "^7.1.19",
@@ -57,7 +57,7 @@
         "react": "19.2.3",
         "react-native": "0.85.0-rc.0",
         "react-native-nitro-modules": "*",
-        "react-native-nitro-sqlite": "9.4.0",
+        "react-native-nitro-sqlite": "9.6.0",
         "react-native-safe-area-context": "^5.5.2",
         "react-native-screens": "^4.18.0",
         "reflect-metadata": "^0.1.13",
@@ -90,7 +90,7 @@
     },
     "package": {
       "name": "react-native-nitro-sqlite",
-      "version": "9.4.0",
+      "version": "1.0.0",
       "dependencies": {
         "typeorm": "0.3.27",
       },
@@ -2661,6 +2661,8 @@
     "react-native-builder-bob/metro-config": ["metro-config@0.80.12", "", { "dependencies": { "connect": "^3.6.5", "cosmiconfig": "^5.0.5", "flow-enums-runtime": "^0.0.6", "jest-validate": "^29.6.3", "metro": "0.80.12", "metro-cache": "0.80.12", "metro-core": "0.80.12", "metro-runtime": "0.80.12" } }, "sha512-4rwOWwrhm62LjB12ytiuR5NgK1ZBNr24/He8mqCsC+HXZ+ATbrewLNztzbAZHtFsrxP4D4GLTGgh96pCpYLSAQ=="],
 
     "react-native-builder-bob/yargs": ["yargs@17.7.2", "", { "dependencies": { "cliui": "^8.0.1", "escalade": "^3.1.1", "get-caller-file": "^2.0.5", "require-directory": "^2.1.1", "string-width": "^4.2.3", "y18n": "^5.0.5", "yargs-parser": "^21.1.1" } }, "sha512-7dSzzRQ++CKnNI/krKnYRV7JKKPUXMEh61soaHKg9mrWEhzFWhFnxPxGl+69cD1Ou63C13NUPCnmIcrvqCuM6w=="],
+
+    "react-native-nitro-sqlite-example/react-native-nitro-sqlite": ["react-native-nitro-sqlite@9.6.0", "", { "dependencies": { "typeorm": "0.3.27" }, "peerDependencies": { "react": ">=17.0.0", "react-native": ">=0.75.0", "react-native-nitro-modules": ">=0.35.0" } }, "sha512-a/N1yGhM8RvCCnaYhEHhh35YS+HDOAcGKeKFsp2ExCzIjP8vPXuzQtHylgLQLeAh7rUaism5q0QQFfogXm1SXA=="],
 
     "react-test-renderer/scheduler": ["scheduler@0.26.0", "", {}, "sha512-NlHwttCI/l5gCPR3D1nNXtWABUmBwvZpEQiD4IXSbIDq8BzLIK/7Ir5gTFSGZDUu37K5cMNp0hFtzO38sC7gWA=="],
 

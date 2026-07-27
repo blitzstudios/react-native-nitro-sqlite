@@ -15,6 +15,7 @@ namespace margelo::nitro::rnnitrosqlite {
     // load custom methods/properties
     registerHybrids(this, [](Prototype& prototype) {
       prototype.registerHybridMethod("open", &HybridNitroSQLiteSpec::open);
+      prototype.registerHybridMethod("openSecondary", &HybridNitroSQLiteSpec::openSecondary);
       prototype.registerHybridMethod("close", &HybridNitroSQLiteSpec::close);
       prototype.registerHybridMethod("drop", &HybridNitroSQLiteSpec::drop);
       prototype.registerHybridMethod("attach", &HybridNitroSQLiteSpec::attach);

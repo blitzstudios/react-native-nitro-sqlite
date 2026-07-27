@@ -70,6 +70,12 @@ void HybridNitroSQLite::open(const std::string& dbName, const std::optional<std:
   sqliteOpenDb(dbName, docPath);
 }
 
+void HybridNitroSQLite::openSecondary(const std::string& dbName, const std::string& handle, std::optional<bool> readOnly,
+                                      const std::optional<std::string>& location) {
+  const auto docPath = getDocPath(location);
+  sqliteOpenSecondaryDb(dbName, handle, readOnly.value_or(false), docPath);
+}
+
 void HybridNitroSQLite::close(const std::string& dbName) {
   sqliteCloseDb(dbName);
 };
