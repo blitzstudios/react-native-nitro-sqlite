@@ -273,6 +273,27 @@ nitroSqliteFlags="-DSQLITE_ENABLE_FTS5=1"
 
 To put the database in an app group (e.g. for extensions), set `RNNitroSQLite_AppGroup` in your `Info.plist` to the app group ID and add the App Groups capability in Xcode.
 
+## Where databases are stored
+
+| Platform | Directory | Backed up |
+| --- | --- | --- |
+| iOS | `Library/Application Support/NitroSQLite` | no |
+| iOS, with `RNNitroSQLite_AppGroup` set | the app group container | as the container is configured |
+| Android | the app's `filesDir` | per your manifest's `android:allowBackup` |
+
+On iOS this is the directory Apple asks for a store the app manages itself: it is not exposed by File Sharing or
+mixed in with the user's own files the way `Documents` is, and the OS will not reclaim it under storage pressure
+the way it can `Caches`.
+
+It is also excluded from iCloud and iTunes backup, because a database an app fills from a server is regenerable —
+backing it up inflates every user's backup and can restore rows onto a new device that are staler than what the
+server would have given it. Two `Info.plist` booleans opt out:
+
+- `RNNitroSQLite_BackUpDatabases` — include the databases in backups. For a database that is the only copy of
+  something: written on device, not re-derivable from anywhere else.
+- `RNNitroSQLite_UseDocumentDirectory` — store databases directly in `Documents`, as versions before 1.1.1 did. An
+  app that has already shipped databases there needs this, or its existing files are orphaned.
+
 ---
 
 # Exports
