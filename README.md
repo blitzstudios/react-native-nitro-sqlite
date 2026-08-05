@@ -273,6 +273,25 @@ nitroSqliteFlags="-DSQLITE_ENABLE_FTS5=1"
 
 To put the database in an app group (e.g. for extensions), set `RNNitroSQLite_AppGroup` in your `Info.plist` to the app group ID and add the App Groups capability in Xcode.
 
+## How the native code is compiled (iOS)
+
+The podspec pins two things that a stock pod would otherwise get wrong for this library.
+
+**SQLite's compile-time flags are applied.** Upstream computed them into a variable and then guarded the
+assignment with `performance_mode == '1'`, comparing an integer against a string, so the branch never ran in any
+configuration and none of the flags were ever set. They are applied unconditionally now, with
+`SQLITE_THREADSAFE=1`. Serialized is the only correct setting for this fork: `executeAsync` runs statements on a
+background thread and `openSecondary` hands out a second connection to the same database, and both are undefined
+behaviour without SQLite's mutexes. There is deliberately no way to ask for `SQLITE_THREADSAFE=0`.
+
+**The C++ is compiled at `-Os` even in Debug.** Xcode builds pods at `-O0` in Debug, and the shredder is
+simdjson — a header-only library that gets essentially all of its speed from inlining. At `-O0` a large shred
+runs several times slower than the same code in the app you ship, which quietly invalidates any cold-load
+measurement taken on a development build. Set `NITRO_SQLITE_DEBUG_NATIVE=1` before `pod install` to keep `-O0`
+when you need to step through the C++ in a debugger.
+
+----
+
 ## Where databases are stored
 
 | Platform | Directory | Backed up |
