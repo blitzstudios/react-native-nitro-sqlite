@@ -38,19 +38,16 @@ function buildJSQueryResult<Row extends QueryResultRow = never>(
 ): QueryResult<Row> {
   const resultWithRows = result as QueryResult<Row>
 
+  // `results` is a Nitro getter, not a field: every read returns `getResults()` by value and rebuilds
+  // the whole result set as JS objects. Read it once. Reading it per use cost two materializations per
+  // query, and made `item` O(n) per element -- iterating a result set that way is quadratic.
+  const rows = result.results as Row[]
+
   resultWithRows.rows = {
-    _array: result.results as Row[],
-    length: result.results.length,
-    item: (idx: number) => result.results[idx] as Row | undefined,
+    _array: rows,
+    length: rows.length,
+    item: (idx: number) => rows[idx] as Row | undefined,
   }
 
   return resultWithRows
-
-  // return Object.assign(result, {
-  //   rows: {
-  //     _array: result.results,
-  //     length: result.results.length,
-  //     item: (idx: number) => result.results[idx],
-  //   },
-  // })
 }
