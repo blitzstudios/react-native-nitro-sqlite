@@ -87,6 +87,20 @@ The `package.json` file contains various scripts for common tasks:
 - `bun example android`: run the example app on Android.
 - `bun example ios`: run the example app on iOS.
 
+### Publishing a gitpkg release
+
+Bump `package/package.json`, then from `package/`:
+
+- `bun run publish-gitpkg`: build, then publish the tag.
+
+Use that rather than calling `gitpkg publish` directly. `gitpkg` packs with `npm pack`, which does
+not run `prepublishOnly`, and `lib/` is gitignored — so a bare `gitpkg publish` tags whatever build
+output happens to be sitting in your working tree, with nothing to show it was stale.
+
+Building from a `prepack` hook instead would look tidier and does not work: consumers install this
+package from the published tag, which already carries `lib/`, and yarn runs `prepack` when it packs
+a git dependency. That would make every install try to rebuild the package without a toolchain.
+
 ### Sending a pull request
 
 > **Working on your first pull request?** You can learn how from this _free_ series: [How to Contribute to an Open Source Project on GitHub](https://egghead.io/series/how-to-contribute-to-an-open-source-project-on-github).
