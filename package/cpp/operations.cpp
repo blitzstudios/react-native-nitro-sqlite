@@ -54,6 +54,10 @@ void sqliteOpenSecondaryDb(const std::string& dbName, const std::string& handle,
     throw NitroSQLiteException(NitroSQLiteExceptionType::DatabaseCannotBeOpened,
                                "handle '" + handle + "' is already in use by an open connection");
   }
+  if (is_memory_db(dbName)) {
+    throw NitroSQLiteException(NitroSQLiteExceptionType::DatabaseCannotBeOpened,
+                               "'" + dbName + "' is an in-memory database, which only its own connection can reach");
+  }
 
   std::string dbPath = get_db_path(dbName, docPath);
 
@@ -127,6 +131,10 @@ void sqliteDetachDb(const std::string& mainDBName, const std::string& alias) {
 void sqliteRemoveDb(const std::string& dbName, const std::string& docPath) {
   if (dbMap.count(dbName) == 1) {
     sqliteCloseDb(dbName);
+  }
+  // An in-memory database is gone once its connection closes; there is no file to remove.
+  if (is_memory_db(dbName)) {
+    return;
   }
 
   std::string dbFilePath = get_db_path(dbName, docPath);

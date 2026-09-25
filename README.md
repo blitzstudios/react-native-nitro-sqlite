@@ -57,6 +57,10 @@ const db = open({ name: 'myDb.sqlite' })
 // Optional: open({ name: 'myDb.sqlite', location: '/some/path' })
 ```
 
+A name starting with `:memory:` opens a private in-memory database instead of a file, such as
+`open({ name: ':memory:cache' })`. The text after `:memory:` is only the connection's name, so each one is a separate
+database; it lasts until its connection closes, `delete()` just closes it, and `openSecondary()` can't reach it.
+
 | Method | Sync | Async | Description |
 |--------|------|-------|-------------|
 | **Execute** | `db.execute(query, params?)` | `db.executeAsync(query, params?)` | Run a single SQL statement. |

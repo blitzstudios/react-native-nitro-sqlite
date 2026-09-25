@@ -52,7 +52,19 @@ inline bool file_exists(const std::string& path) {
   return (stat(path.c_str(), &buffer) == 0);
 }
 
+/**
+ * Whether `dbName` names a private in-memory database: `:memory:`, optionally followed by a label, such as
+ * `:memory:player_stats`. The label is only the connection's name, so each labelled database is a separate one.
+ */
+inline bool is_memory_db(const std::string& dbName) {
+  return dbName.rfind(":memory:", 0) == 0;
+}
+
 std::string get_db_path(const std::string& dbName, const std::string& docPath) {
+  // SQLite opens an in-memory database only for the exact name `:memory:`, so a label must not reach it.
+  if (is_memory_db(dbName)) {
+    return ":memory:";
+  }
   mkdir(docPath.c_str());
   return docPath + "/" + dbName;
 }
