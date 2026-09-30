@@ -271,12 +271,11 @@ std::shared_ptr<HybridNitroSQLiteQueryResult> sqliteExecute(const std::string& d
           column_name = sqlite3_column_name(statement, i);
           const char* tp = sqlite3_column_decltype(statement, i);
           column_declared_type = mapSQLiteTypeToColumnType(tp);
-          auto columnMeta = NitroSQLiteQueryColumnMetadata(std::move(column_name), std::move(column_declared_type), i);
-
           if (!metadata) {
             metadata = std::make_optional<SQLiteQueryTableMetadata>();
           }
-          metadata->insert({column_name, columnMeta});
+          // The key is a copy: the entry would otherwise take the name by move and leave every key empty.
+          metadata->insert({column_name, NitroSQLiteQueryColumnMetadata(column_name, column_declared_type, i)});
           i++;
         }
         isConsuming = false;
