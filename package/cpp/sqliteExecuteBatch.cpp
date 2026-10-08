@@ -8,8 +8,9 @@
 
 namespace margelo::rnnitrosqlite {
 
-std::vector<BatchQuery> batchParamsToCommands(const std::vector<BatchQueryCommand>& batchParams) {
+std::vector<BatchQuery> batchParamsToCommands(std::vector<BatchQueryCommand>&& batchParams) {
   auto commands = std::vector<BatchQuery>();
+  commands.reserve(batchParams.size());
 
   for (auto& command : batchParams) {
     if (command.params) {
@@ -18,14 +19,14 @@ std::vector<BatchQuery> batchParamsToCommands(const std::vector<BatchQueryComman
 
       if (std::holds_alternative<NestedParamsVec>(*command.params)) {
         // This arguments is an array of arrays, like a batch update of a single sql command.
-        for (const auto& params : std::get<NestedParamsVec>(*command.params)) {
-          commands.push_back(BatchQuery{command.query, ParamsVec(params)});
+        for (auto& params : std::get<NestedParamsVec>(*command.params)) {
+          commands.push_back(BatchQuery{command.query, std::move(params)});
         }
       } else {
-        commands.push_back(BatchQuery{command.query, std::move(std::get<ParamsVec>(*command.params))});
+        commands.push_back(BatchQuery{std::move(command.query), std::move(std::get<ParamsVec>(*command.params))});
       }
     } else {
-      commands.push_back(BatchQuery{command.query, std::nullopt});
+      commands.push_back(BatchQuery{std::move(command.query), std::nullopt});
     }
   }
 
@@ -44,7 +45,7 @@ SQLiteOperationResult sqliteExecuteBatch(const std::string& dbName, const std::v
   try {
     int rowsAffected = 0;
     for (int i = 0; i < commandCount; i++) {
-      const auto command = commands.at(i);
+      const auto& command = commands.at(i);
 
       // We do not provide a data structure to receive query data because we don't need/want to handle this results in a batch execution
       auto result = sqliteExecute(dbName, command.sql, command.params);

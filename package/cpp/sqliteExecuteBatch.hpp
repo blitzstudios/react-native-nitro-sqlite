@@ -17,10 +17,10 @@ struct BatchQuery {
 };
 
 /**
- * Local Helper method to translate JSI objects BatchQuery datastructure
+ * Local Helper method to translate JSI objects BatchQuery datastructure, moving the queries and params out of `batchParams`
  * MUST be called in the JavaScript Thread
  */
-std::vector<BatchQuery> batchParamsToCommands(const std::vector<BatchQueryCommand>& batchParams);
+std::vector<BatchQuery> batchParamsToCommands(std::vector<BatchQueryCommand>&& batchParams);
 
 /**
  * Execute a batch of commands in a exclusive transaction
