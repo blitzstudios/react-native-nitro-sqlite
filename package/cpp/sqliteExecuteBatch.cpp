@@ -38,31 +38,34 @@ SQLiteOperationResult sqliteExecuteBatch(const std::string& dbName, const std::v
     throw NitroSQLiteException(NitroSQLiteExceptionType::NoBatchCommandsProvided, "No SQL batch commands provided");
   }
 
+  // BEGIN runs outside the try: if it fails, no transaction of ours is open, so there is nothing to roll back.
+  // A ROLLBACK here would either mask the BEGIN error or end another operation's transaction on this shared handle.
+  sqliteExecuteLiteral(dbName, "BEGIN EXCLUSIVE TRANSACTION");
   try {
     int rowsAffected = 0;
-    sqliteExecuteLiteral(dbName, "BEGIN EXCLUSIVE TRANSACTION");
     for (int i = 0; i < commandCount; i++) {
       const auto command = commands.at(i);
 
-      // We do not provide a datas tructure to receive query data because we don't need/want to handle this results in a batch execution
-      auto results = SQLiteQueryResults();
-      auto metadata = std::optional<SQLiteQueryTableMetadata>(std::nullopt);
-      try {
-        auto result = sqliteExecute(dbName, command.sql, command.params);
-        rowsAffected += result->getRowsAffected();
-      } catch (NitroSQLiteException& e) {
-        sqliteExecuteLiteral(dbName, "ROLLBACK");
-        throw e;
-      }
+      // We do not provide a data structure to receive query data because we don't need/want to handle this results in a batch execution
+      auto result = sqliteExecute(dbName, command.sql, command.params);
+      rowsAffected += result->getRowsAffected();
     }
     sqliteExecuteLiteral(dbName, "COMMIT");
     return {
         .rowsAffected = rowsAffected,
         .commands = (int)commandCount,
     };
-  } catch (NitroSQLiteException& e) {
-    sqliteExecuteLiteral(dbName, "ROLLBACK");
-    throw e;
+  } catch (...) {
+    // Roll back exactly once, and only if SQLite has not already rolled back on its own (e.g. SQLITE_FULL/IOERR/NOMEM).
+    // A failed ROLLBACK must never mask the original error.
+    if (sqliteIsInTransaction(dbName)) {
+      try {
+        sqliteExecuteLiteral(dbName, "ROLLBACK");
+      } catch (...) {
+        // ignore: rethrow the original error below
+      }
+    }
+    throw;
   }
 }
 

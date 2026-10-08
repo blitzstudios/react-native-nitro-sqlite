@@ -1,4 +1,4 @@
-import { chance, expect } from '../../common'
+import { chance, expect, isNitroSQLiteError } from '../../common'
 import type { BatchQueryCommand } from 'react-native-nitro-sqlite'
 import { describe, it } from '../../../MochaRNAdapter'
 import { testDb } from '../../../db'
@@ -76,6 +76,66 @@ export default function registerExecuteBatchUnitTests() {
           networth: networth2,
         },
       ])
+    })
+    it('Failing batch surfaces the original error and rolls back once', () => {
+      const id = chance.integer()
+      const commands: BatchQueryCommand[] = [
+        {
+          query:
+            'INSERT INTO "User" (id, name, age, networth) VALUES(?, ?, ?, ?)',
+          params: [id, chance.name(), chance.integer(), chance.floating()],
+        },
+        {
+          query:
+            'INSERT INTO "User" (id, name, age, networth) VALUES(?, ?, ?, ?)',
+          params: [id, chance.name(), chance.integer(), chance.floating()],
+        },
+      ]
+
+      let error: unknown
+      try {
+        testDb.executeBatch(commands)
+      } catch (e) {
+        error = e
+      }
+
+      expect(isNitroSQLiteError(error)).to.equal(true)
+      expect((error as Error).message).to.include('UNIQUE constraint failed')
+      expect((error as Error).message).not.to.include('cannot rollback')
+      expect(testDb.execute('SELECT * FROM User').rows?._array).to.eql([])
+      // The handle is back in autocommit mode, so a new batch can begin.
+      testDb.executeBatch([commands[0]!])
+      expect(testDb.execute('SELECT * FROM User').rows?.length).to.equal(1)
+    })
+
+    it('Failing async batch surfaces the original error and rolls back once', async () => {
+      const id = chance.integer()
+      const commands: BatchQueryCommand[] = [
+        {
+          query:
+            'INSERT INTO "User" (id, name, age, networth) VALUES(?, ?, ?, ?)',
+          params: [id, chance.name(), chance.integer(), chance.floating()],
+        },
+        {
+          query:
+            'INSERT INTO "User" (id, name, age, networth) VALUES(?, ?, ?, ?)',
+          params: [id, chance.name(), chance.integer(), chance.floating()],
+        },
+      ]
+
+      let error: unknown
+      try {
+        await testDb.executeBatchAsync(commands)
+      } catch (e) {
+        error = e
+      }
+
+      expect(isNitroSQLiteError(error)).to.equal(true)
+      expect((error as Error).message).to.include('UNIQUE constraint failed')
+      expect((error as Error).message).not.to.include('cannot rollback')
+      expect(testDb.execute('SELECT * FROM User').rows?._array).to.eql([])
+      await testDb.executeBatchAsync([commands[0]!])
+      expect(testDb.execute('SELECT * FROM User').rows?.length).to.equal(1)
     })
   })
 }

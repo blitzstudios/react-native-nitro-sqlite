@@ -23,6 +23,12 @@ std::shared_ptr<HybridNitroSQLiteQueryResult> sqliteExecute(const std::string& d
 
 SQLiteOperationResult sqliteExecuteLiteral(const std::string& dbName, const std::string& query);
 
+/**
+ * Whether the connection `dbName` currently has an open transaction (i.e. is not in autocommit mode).
+ * Returns false when the database is not open.
+ */
+bool sqliteIsInTransaction(const std::string& dbName);
+
 void sqliteCloseAll();
 
 } // namespace margelo::rnnitrosqlite

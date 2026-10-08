@@ -349,4 +349,13 @@ SQLiteOperationResult sqliteExecuteLiteral(const std::string& dbName, const std:
   return {.rowsAffected = sqlite3_changes(db)};
 }
 
+bool sqliteIsInTransaction(const std::string& dbName) {
+  if (dbMap.count(dbName) == 0) {
+    return false;
+  }
+
+  sqlite3* db = dbMap[dbName];
+  return sqlite3_get_autocommit(db) == 0;
+}
+
 } // namespace margelo::rnnitrosqlite
